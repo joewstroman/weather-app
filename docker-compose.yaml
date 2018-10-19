@@ -6,6 +6,13 @@ services:
         MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       context: ./database
     ports:
-      - "5432:5432"
+      - "9000:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: me
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+  # rest:
+  #   build:
+  #     context: ./restapi
+  #   ports:
+  #    - "8000:3000"

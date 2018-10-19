@@ -29,19 +29,23 @@ class App extends React.Component<{},IAppState> {
               <span style={{margin: '0px 25px'}}>Weather Powered Email</span>
             <WbCloudy />
           </h2>
-          <Paper style={{margin: '100px 0px', display: 'inline-block', textAlign: 'center', width: '50%'}}>
-            {/* <h3>Please select your city:</h3> */}
+          <div style={{textAlign: 'center'}}>
+            <div style={{width: '50%', display: 'inline-block', color: '#0203448f'}}>Enter your email and highly populated city below, and preapre to receive email powered by the weather.</div>
+          </div>
+          <Paper style={{margin: '55px 0px', display: 'inline-block', textAlign: 'center', width: '50%'}}>
             <div style={{margin: '25px 0px'}}>
               <div style={{position: 'relative'}}>
-                <TextField id={'email-input-field'} placeholder={'Email Address'} onChange={this.setEmail} />
-                <HighlightOff className={(this.state.validEmail) ? 'invisible' : 'visible' } style={{color: '#de1a1acc', transition: '1s', position: 'absolute', top: '14px', right: '52px'}}/>
-                {(this.state.email.length > 0) ? <Done className={(this.state.validEmail) ? 'visible' : 'invisible' } style={{color: '#2b9a36cc', transition: '1s', position: 'absolute', top: '13px', left: '52px'}}  /> : null}
+                <div style={{position: 'relative', display: 'inline-block'}}>
+                  {(this.state.email.length > 0) ? <Done className={(this.state.validEmail) ? 'visible' : 'invisible' } style={{color: '#2b9a36cc', transition: '1s', position: 'absolute', top: '13px', left: '-32px'}}  /> : null}
+                  <TextField id={'email-input-field'} placeholder={'Email'} onChange={this.setEmail} />
+                  <HighlightOff className={(this.state.validEmail) ? 'invisible' : 'visible' } style={{color: '#de1a1acc', transition: '1s', position: 'absolute', top: '14px', right: '-32px' }} />
+                </div>
               </div>
               <div>
                 <TextField id={'city-input-field'} placeholder={'City:'} value={this.state.selection} onChange={this.autoComplete} />
                 {this.renderMenu()}
               </div>
-              <Button variant={"contained"} color={"primary"} style={{backgroundColor: '#049eb3', margin: '20px 0px'}}>Suscribe</Button>
+              <Button onClick={this.addToDatabase} variant={"contained"} color={"primary"} style={{backgroundColor: '#049eb3', margin: '20px 0px'}}>Suscribe</Button>
               </div>
           </Paper>
         </div>
@@ -53,9 +57,19 @@ class App extends React.Component<{},IAppState> {
     this.fetchCities();
   }
 
+  private async addToDatabase (e:React.MouseEvent<HTMLElement>) {
+    return
+  }
+
+  private match(input:string, comparison:string) {
+    return input.toLowerCase().indexOf(comparison.toLowerCase()) > -1 ;
+  }
+
   private renderSuggestion = (location:ILocation) => {
+    const cityMatch = this.match(location.city, this.state.selection.split(',')[0]);
+    const stateMatch = this.match(location.state, this.state.selection.split(',')[0]);
     return ( 
-      (location.city.toLowerCase().indexOf(this.state.selection.split(',')[0].toLowerCase()) > -1) ? 
+      (cityMatch || stateMatch) ? 
       <MenuItem key={location.city} onClick={this.menuItemClick}>{`${location.city}, ${location.state}`}</MenuItem> :
       null
     )
@@ -71,11 +85,10 @@ class App extends React.Component<{},IAppState> {
   }
 
   private renderMenu = () => {
-    const width = (this.anchorEl) ? this.anchorEl.clientWidth - 30 + 'px' : 0;
-    // const height = (this.anchorEl) ? this.anchorEl.clientHeight + 'px' : 0;
+    const width = (this.anchorEl) ? this.anchorEl.clientWidth + 'px' : 0;
     return (
-      <Popper style={{ width }} open={this.state.openAutoComplete} anchorEl={this.anchorEl}>
-        <Paper style={{ maxHeight: 200 , overflow: 'auto' }}>
+      <Popper open={this.state.openAutoComplete} anchorEl={this.anchorEl}>
+        <Paper style={{ maxHeight: 200, maxWidth: width, overflow: 'auto' }}>
           <MenuList>
             { map(this.state.locations, this.renderSuggestion) }
           </MenuList>
