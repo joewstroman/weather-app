@@ -1,0 +1,11 @@
+version: '2' 
+services:
+  db:
+    build:
+      args:
+        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      context: ./database
+    ports:
+      - "5432:5432"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
