@@ -5,14 +5,19 @@ services:
       args:
         MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       context: ./database
-    ports:
-      - "9000:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: me
       MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-  # rest:
-  #   build:
-  #     context: ./restapi
-  #   ports:
-  #    - "8000:3000"
+  restapi:
+    links: 
+      - db
+    build:
+      context: ./restapi
+    restart: always
+    ports:
+     - "8000:3000"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      
+  

@@ -8,6 +8,7 @@ RUN echo [mysql] > /home/mysql/.first.run.cnf
 RUN echo user = root >> /home/mysql/.first.run.cnf
 RUN echo password = $MYSQL_ROOT_PASSWORD >> /home/mysql/.first.run.cnf
 
-RUN cat /home/mysql/.first.run.cnf
+RUN chmod 0444 /home/mysql/.first.run.cnf
+RUN chown -R mysql:mysql /home/mysql
 COPY commands.sql /docker-entrypoint-initdb.d
 COPY run.sh /docker-entrypoint-initdb.d

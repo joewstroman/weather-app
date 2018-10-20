@@ -1,1 +1,6 @@
-mysql --defaults-file=/home/mysql/.first.run.cnf -e "alter user 'root' identified with mysql_native_password by '$MYSQL_ROOT_PASSWORD';"
+mysql --defaults-file=/home/mysql/.first.run.cnf -e "use weather; alter user 'root' identified with mysql_native_password by '$MYSQL_ROOT_PASSWORD';"
+mysql --defaults-file=/home/mysql/.first.run.cnf -e "use weather; alter user 'root'@'%' identified with mysql_native_password by '$MYSQL_ROOT_PASSWORD';"
+mysql --defaults-file=/home/mysql/.first.run.cnf -e "use weather; alter user '$MYSQL_USER' identified with mysql_native_password by '$MYSQL_PASSWORD';"
+mysql --defaults-file=/home/mysql/.first.run.cnf -e "use weather; alter user '$MYSQL_USER'@'%' identified with mysql_native_password by '$MYSQL_PASSWORD';"
+mysql --defaults-file=/home/mysql/.first.run.cnf -e "use weather; grant all on * to '$MYSQL_USER'@'%';"
+mysql --defaults-file=/home/mysql/.first.run.cnf -e "use weather; flush privileges;"
