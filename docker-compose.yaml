@@ -7,17 +7,20 @@ services:
       context: ./database
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_USER: me
+      MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD}
   restapi:
     links: 
       - db
     build:
       context: ./restapi
+    command: ./wait-for-db.sh db
     restart: always
     ports:
-     - "8000:3000"
+     - "9000:80"
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      
+      DB_HOST: db
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      DB_NAME: weather
   

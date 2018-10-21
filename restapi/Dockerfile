@@ -1,9 +1,16 @@
-FROM node:latest
+FROM markuman/xmysql:0.4.2
 
 RUN npm install -g xmysql
+
 COPY wait-for-db.sh /
 
 RUN chmod 777 /wait-for-db.sh
-ENV MYSQL_ROOT_PASSWORD ${MYSQL_ROOT_PASSWORD}
-ENV MYSQL_USER ${MYSQL_USER}
-CMD [ "./wait-for-db.sh", "db", "xmysql -u me -p lala -h db -d weather" ]
+
+ENV DB_HOST $DB_HOST
+ENV DB_USER $DB_USER
+ENV DB_PASSWORD=${DB_PASSWORD}
+ENV DB_NAME=${DB_NAME}
+
+ENTRYPOINT [ "/bin/sh", "/wait-for-db.sh" ]
+
+CMD [ "/wait-for-db.sh" ]
