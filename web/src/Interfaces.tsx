@@ -4,6 +4,8 @@ export interface IAppState {
     email: string;
     openAutoComplete: boolean;
     validEmail: boolean;
+    showModal: boolean;
+    menuIndex: number;
   }
   
   export interface ILocation {
