@@ -94,7 +94,7 @@ async function findUsualTemperature(entry) {
   
   if (currentTemp > avgTemp + 5 || currentClimate.toLowerCase().indexOf("clear") > -1 && currentData.precipIntensity === 0) {
     return [1, currentData];
-  } else if (currentTemp < avgTemp - 5 || currentData.precipIntensity > 0) {
+  } else if (currentTemp < avgTemp - 5 || currentData.precipIntensity > 0.005) {
     return [-1, currentData];
   } else {
     return [0, currentData];
@@ -128,7 +128,7 @@ function sendEmail(email, type, data) {
 
   const mailOptions = {
     from: process.env.GMAIL_USER_ADDRESS,
-    to: "etherealiska@gmail.com",
+    to: email,
     subject: mailObject.subject,
     html: `
       <div style="margin-bottom: 10px;">Current Weather: ${data.temperature} degrees and ${data.summary.toLowerCase()}</div>
@@ -139,8 +139,8 @@ function sendEmail(email, type, data) {
 
   console.log(`=== Sending email to ${email}`);
   transporter.sendMail(mailOptions, (err, info) => {
-    if (err) console.log(err)
-    else console.log(info);
+    if (err) console.log(err);
+    else console.log(mailOptions);
   });
 }
 
