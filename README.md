@@ -10,7 +10,7 @@ This app contains a web interface that collects user input (email address, and l
 
 ### Installing
 
-*Web Application*
+#### Web Application
 
 Install docker and run this command in the root directory.
 
@@ -29,7 +29,7 @@ MYSQL_ROOT_PASSWORD -- Root password, this will be set for root user and the use
 ```
 
 
-*Cli*
+#### Cli
 
 ```
 cd weather-app/cli
