@@ -24,7 +24,7 @@ services:
       DB_HOST: db
       DB_USER: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      DB_NAME: ${MYSQL_DB}
+      DB_NAME: weather
   web:
     build:
       context: ./web
