@@ -39,5 +39,10 @@ npm install
 `./emailer send -e [email]`
 
 You will also have to set the environment variables
-`GMAIL_USER_ADDRESS`
-`GMAIL_PASSWORD`
+
+```
+GMAIL_USER_ADDRESS
+GMAIL_PASSWORD
+```
+
+And make sure your database is still running (started by docker-compose up)
