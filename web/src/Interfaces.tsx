@@ -11,6 +11,7 @@ export interface IAppState {
   export interface ILocation {
     state: string;
     city: string;
+    coordinates: number[];
   }
   
   export interface IApiData {
@@ -18,6 +19,7 @@ export interface IAppState {
     parameters: {};
     nhits: number;
     facet_groups: {};
+    coordinates: number[];
   }
   
   export interface IRecord {

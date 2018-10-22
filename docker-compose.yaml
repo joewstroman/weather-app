@@ -5,6 +5,8 @@ services:
       args:
         MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       context: ./database
+    ports:
+      - 3306:3306
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}
@@ -17,10 +19,15 @@ services:
     command: ./wait-for-db.sh db
     restart: always
     ports:
-     - "9000:80"
+      - 9000:80
     environment:
       DB_HOST: db
       DB_USER: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      DB_NAME: weather
+      DB_NAME: ${MYSQL_DB}
+  web:
+    build:
+      context: ./web
+    ports:
+      - 80:5000
   

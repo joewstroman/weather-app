@@ -1,0 +1,25 @@
+{
+  "name": "emailer",
+  "version": "1.0.0",
+  "description": "This tool will send an email to the specified address, with information about the weather with details gathered from a Weather API and city corresponding to it's entry in the database.",
+  "main": "index.js",
+  "scripts": {
+    "test": "-h"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/joewstroman/weather-app.git"
+  },
+  "author": "Joseph W Stroman",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/joewstroman/weather-app/issues"
+  },
+  "homepage": "https://github.com/joewstroman/weather-app#readme",
+  "dependencies": {
+    "commander": "^2.19.0",
+    "mysql": "^2.16.0",
+    "node-fetch": "^2.2.0",
+    "nodemailer": "^4.6.8"
+  }
+}

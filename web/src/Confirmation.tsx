@@ -9,32 +9,30 @@ interface IModalProps {
     close(): void;
 }
 
-function rand() {
-  return Math.round(Math.random() * 20) - 10;
-}
+let WIDTH:number = 0;
+let WINDOWWIDTH = window.innerWidth || document.body.clientWidth;
+if (!WINDOWWIDTH && document.documentElement) { WINDOWWIDTH = document.documentElement.clientWidth }
 
-const top = 50 + rand();
-const left = 50 + rand();
-
-const styles = (theme:Theme) => withStyles({
+const styles = (theme:Theme) => {
+  WIDTH = theme.spacing.unit * 50
+  return withStyles({
     paper: {
         backgroundColor: theme.palette.background.paper,
         boxShadow: theme.shadows[5],
         padding: theme.spacing.unit * 4,
         position: 'absolute',
-        width: theme.spacing.unit * 50,
+        width: WIDTH,
         },
     root: {
-        left: `${left}%`,
         position: "absolute",
-        top: `${top}%`,
-        transform: `translate(-${top}%, -${left}%)`
     },
-});
+  });
+}
 
 class Confirmation extends React.Component<IModalProps,{}> {
 
   public render() {
+
     return (
       <Modal
           aria-labelledby="simple-modal-title"
@@ -42,7 +40,7 @@ class Confirmation extends React.Component<IModalProps,{}> {
           open={this.props.open}
           onClose={this.handleClose}
         >
-          <Paper style={{padding: "10px 10px" , left: "25%", top: "25%", position: 'absolute'}} className={this.props.paper}>
+          <Paper style={{padding: "10px 10px", left: WINDOWWIDTH / 2 - WIDTH / 2 - 25, top: "25%", position: 'absolute'}} className={this.props.paper}>
             <Typography variant="h6" id="modal-title">
               Success!
             </Typography>

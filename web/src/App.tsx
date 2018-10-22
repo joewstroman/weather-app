@@ -16,7 +16,6 @@ const DATABASEAPIURL = 'http://localhost:9000';
 class App extends React.Component<{},IAppState> {
 
   private anchorEl:HTMLElement;
-  // private listRef:React.RefObject<Paper>;
   private visibleLocations:string[][];
 
   private constructor(props: any) {
@@ -84,8 +83,8 @@ class App extends React.Component<{},IAppState> {
   }
 
   private isValidCity(selection: string) {
-    const city = selection.split(",")[0];
-    
+    const city = selection.split(",")[0].trim();
+
     const location = find(this.state.locations, (l) => {
       return city === l.city;
     });
@@ -107,10 +106,15 @@ class App extends React.Component<{},IAppState> {
 
   private addToDatabase = async (e:React.MouseEvent<HTMLElement>) => {
     if (this.validate()) {
+      const location = find(this.state.locations, (l:ILocation) => l.city === this.state.selection.split(",")[0])
+      const coords = (location) ? location.coordinates : [];
+
       fetch(DATABASEAPIURL + "/api/emails", {
         body: JSON.stringify({
           email: this.state.email.replace(/(\r\n|\n|\r)/gm, ""),
+          latitude: coords[0],
           location: this.state.selection.replace(/(\r\n|\n|\r)/gm, ""),
+          longitude: coords[1],
         }),
         cache: "no-cache",
         headers: {
@@ -118,10 +122,10 @@ class App extends React.Component<{},IAppState> {
         },
         method: "POST",
         mode: "cors",
-    }).then((response) => {
+      }).then((response) => {
         if (response.status === 200) {
           this.setState(assign(this.state, { showModal: true }));
-         }
+        }
       });
     }
   }
@@ -191,13 +195,14 @@ class App extends React.Component<{},IAppState> {
     let locations:ILocation[] = [];
     each(data.records, (record:IRecord) => {
       if (record.fields.rank <= 100) {
-        const location = { city: record.fields.city, state: record.fields.state };
+        const location = { city: record.fields.city, state: record.fields.state, coordinates: record.fields.coordinates };
         locations.push(location);
       }
     });
-    locations = sortBy(locations, (city) => city.city);
+    locations = sortBy(locations, (location) => location.city);
     this.setState(assign(this.state, { locations }));
   }
+  
   private async fetchCities() {
     const resp = await fetch(CITIESAPIURL);
     if (resp.status !== 200) {

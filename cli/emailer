@@ -1,0 +1,179 @@
+#!/usr/bin/env node
+
+const program    = require('commander');
+const mysql      = require('mysql');
+const fetch      = require('node-fetch');
+const nodemailer = require('nodemailer');
+
+const APIKEY = "9c0b8c8fe03f1cec5c97c09ffb826581";
+const historyBaseURI = "https://api.darksky.net/forecast/";
+
+const niceWeather = {
+  subject: "It's nice out! Enjoy a discount on us.",
+  image: "http://www.irishnews.com/picturesarchive/irishnews/irishnews/2017/04/08/220013270-e3218419-f6a9-47f4-a93f-9d26cf765fe9.jpg",
+  text: "It's such a nice day out, and to make it even brighter we're offering you a discount."
+}
+
+const badWeather = {
+  subject: "Not so nice out? That's okay, enjoy a discount on us.",
+  image: "http://www.pethealthnetwork.com/sites/default/files/cold-weather-tips-dogs-519388263_0.jpg",
+  text: "Sometimes the weather isn't great, but there's always a way to make the day better.\nTo prove it here's a discount for you."
+}
+
+const neutralWeather = {
+  subject: "Enjoy a discount on us.",
+  image: "https://media.rbl.ms/image?u=%2Ffiles%2F2016%2F09%2F30%2F636108007660223475-117681935_200.gif&ho=https%3A%2F%2Faz616578.vo.msecnd.net&s=526&h=2cc957bac0261e01f47d00e9d5543e2dfb78c561501804d79e979cc76d6b30a8&size=980x&c=1268085081",
+  text: "It's a regular day. But that doesn't mean it's not a good day.\nHere's a discount to start your day on the right track."
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchRetry(url, options, n) {
+  for (let i = 0; i < n; i++) {
+      try {
+          return await fetch(url, options);
+      } catch (err) {
+        console.log(`Error fetching data from: ${url}`);
+        console.log(`Retrying ${n - i - 1} more times`);
+        const isLastAttempt = i + 1 === n;
+        if (isLastAttempt) throw err;
+      }
+  }
+}
+
+async function findUsualTemperature(entry) {
+  var i;
+  var currentTemp;
+  var currentData;
+  var historicalTemps = [];
+  var date;
+  var fetchOptions = {
+    redirect: "follow",
+    referrer: "no-referrer",
+    cache: "no-cache",
+    headers: { "Content-Type": "application/json" },
+    method: "GET"
+  }
+
+  console.log("Fetching weather data for:", entry.location);
+  
+  for (i = 0; i < 7; i++) { 
+    date = new Date();
+    timestamp = Math.floor(date.setFullYear(date.getFullYear() - i) / 1000);
+    
+    var url = historyBaseURI + `${APIKEY}/${entry.latitude},${entry.longitude},${timestamp}?units=us&exclude=currently,minutely,flags`;
+
+    var resp = await fetchRetry(url, fetchOptions, 5);
+    
+    if (resp.status === 200) {
+        var json = await resp.json();
+
+        if (i === 0) currentData = json.hourly.data[date.getHours()];
+        else historicalTemps.push(json.hourly.data[date.getHours()].temperature);
+
+    } else {
+      console.log(`Error fetching data for ${entry.location}`);
+      console.log(resp);
+    }
+ 
+    await sleep(1000);
+  }
+  
+
+  var avgTemp = avg(historicalTemps);
+  var currentTemp = currentData.temperature;
+  var currentClimate = currentData.summary;
+  var precipIntensity = currentData.precipIntensity;
+
+  console.log("=== Current Temp:", currentTemp);
+  console.log("=== Climate:", currentClimate);
+  console.log("=== Precip Intensity:", precipIntensity);
+  console.log("=== Avg Temp:", avgTemp);
+  
+  if (currentTemp > avgTemp + 5 || currentClimate.toLowerCase().indexOf("clear") > -1 && currentData.precipIntensity === 0) {
+    return [1, currentData];
+  } else if (currentTemp < avgTemp - 5 || currentData.precipIntensity > 0) {
+    return [-1, currentData];
+  } else {
+    return [0, currentData];
+  }
+}
+
+function avg(list) {
+  sum = 0;
+  for (i in list) {
+    sum += list[i];
+  }
+  return sum / list.length
+}
+
+function sendEmail(email, type, data) {
+  var mailObject;
+
+  if (type === 1) mailObject = niceWeather;
+  else if (type === -1) mailObject = badWeather;
+  else mailObject = neutralWeather;
+
+  let transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.GMAIL_USER_ADDRESS,
+      pass: process.env.GMAIL_PASSWORD
+    }
+  });
+
+  const mailOptions = {
+    from: process.env.GMAIL_USER_ADDRESS,
+    to: "etherealiska@gmail.com",
+    subject: mailObject.subject,
+    html: `
+      <div style="margin-bottom: 10px;">Current Weather: ${data.temperature} degrees and ${data.summary.toLowerCase()}</div>
+      <div style="margin-bottom: 10px;">${mailObject.text}</div>
+      <img src=${mailObject.image} border=1 width=300 height=300 />
+    `
+  };
+
+  console.log(`=== Sending email to ${email}`);
+  transporter.sendMail(mailOptions, (err, info) => {
+    if (err) console.log(err)
+    else console.log(info);
+  });
+}
+
+program
+  .version('0.1.0')
+  .usage('Usage: send -e email')
+  .option('-e, --email', 'Address to send weather powered email')
+  .command('send <email>')
+  .action(function(email) {
+    conn = mysql.createConnection({
+      host     : 'localhost',
+      user     : 'me',
+      password : 'lala',
+      database : 'weather'
+    });
+    conn.connect();
+    conn.query(`select * from emails where email = '${email}';`, function (error, results, fields) {
+      if (error) throw error;
+      if (results.length < 1) { 
+          console.log(`${email} has not been submitted to database`);
+      } else {
+        findUsualTemperature(results[0])
+        .then( (info) => {
+          var messageType = info[0];
+          var currentData = info[1];
+          sendEmail(email, messageType, currentData);
+        })
+        .catch ( (error) => {
+          console.log(`There was an error fetching temperature data`);
+        })
+      }
+    }); 
+    conn.end();
+  })
+
+program.parse(process.argv);
