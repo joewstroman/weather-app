@@ -4,8 +4,9 @@ This app contains a web interface that collects user input (email address, and l
 
 ### Prerequisites
 
-Docker
-Nodejs
+- Docker
+
+- Nodejs
 
 ### Installing
 
@@ -36,3 +37,7 @@ npm install
 ```
 
 `./emailer send -e [email]`
+
+You will also have to set the environment variables
+`GMAIL_USER_ADDRESS`
+`GMAIL_PASSWORD`
