@@ -1,4 +1,5 @@
 export interface IAppState {
+    emailIsInDatabase: boolean;
     locations: ILocation[];
     selection: string;
     email: string;

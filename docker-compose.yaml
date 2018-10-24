@@ -2,15 +2,15 @@ version: '2'
 services:
   db:
     build:
-      args:
-        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       context: ./database
     ports:
       - 3306:3306
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DB_NAME: ${MYSQL_DB_NAME}
+      MYSQL_TABLE_NAME: ${MYSQL_TABLE_NAME}
   restapi:
     links: 
       - db
@@ -23,10 +23,12 @@ services:
     environment:
       DB_HOST: db
       DB_USER: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      DB_NAME: weather
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_NAME: ${MYSQL_DB_NAME}
   web:
     build:
+      args:
+        REACT_APP_MYSQL_TABLE_NAME: ${MYSQL_TABLE_NAME}
       context: ./web
     ports:
       - 80:5000

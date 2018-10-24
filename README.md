@@ -23,8 +23,10 @@ That's it. Visit `http://localhost:80` to see the app.
 It will warn you when you don't have the correct environment variables set, when running docker.
 
 ```
-MYSQL_USER -- User to sign in ass
-MYSQL_ROOT_PASSWORD -- Root password, this will be set for root user and the user above
+MYSQL_USER -- User to sign in as
+MYSQL_PASSWORD -- User and root password
+MYSQL_DB_NAME -- Name of initial database
+MYSQL_TABLE_NAME -- Table name to store emails and locations
 ```
 
 
@@ -36,3 +38,15 @@ npm install
 ```
 
 `./emailer send -e [email]`
+`./emailer send-all`
+
+You will also need to set enviornment variables here:
+```
+DARK_SKY_API_KEY
+GMAIL_USER_ADDRESS
+GMAIL_PASSWORD
+MYSQL_DB_HOST (localhost)
+MYSQL_USER
+MYSQL_PASSWORD
+MYSQL_DB_NAME
+```
