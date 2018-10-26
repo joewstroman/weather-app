@@ -4,20 +4,18 @@ This app contains a web interface that collects user input (email address, and l
 
 ### Prerequisites
 
-Docker
-Nodejs
+- Docker
 
-### Installing
+- Nodejs
 
-
-Install docker.
+### Initialization
 
 ```
 cd weather-app
 docker-compose up
 ```
 
-That's it. Visit `http://localhost:80` to see the app.
+That's it. Visit `http://localhost:80` to view the app.
 
 The docker-compose up command initializes:
 
@@ -38,8 +36,7 @@ MYSQL_TABLE_NAME -- Table name to store emails and locations
 ```
 
 
-
-*Cli*
+#### Cli
 
 ```
 cd weather-app/cli
@@ -51,11 +48,12 @@ npm install
 
 You will also need to set enviornment variables here:
 ```
-DARK_SKY_API_KEY
+DARK_SKY_API_KEY (f03bf9a777e7463a57a26e990397bddf)
 GMAIL_USER_ADDRESS
 GMAIL_PASSWORD
 MYSQL_DB_HOST (localhost)
 MYSQL_USER
 MYSQL_PASSWORD
 MYSQL_DB_NAME
+MYSQL_TABLE_NAME
 ```
