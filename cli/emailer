@@ -108,7 +108,7 @@ async function findUsualTemperature(entry) {
   }
 }
 
-function sendEmail(email, type, data) {
+async function sendEmail(email, type, data) {
   var mailObject;
 
   if (type === 1) mailObject = niceWeather;
@@ -137,38 +137,9 @@ function sendEmail(email, type, data) {
   };
 
   console.log(`=== Sending email to ${email}`);
-  console.log(mailOptions);
-  transporter.sendMail(mailOptions, (err, info) => {
-    if (err) console.log(err);
-    else console.log(mailOptions);
-  });
+  return await sender(transporter, mailOptions);
 }
 
-function sendOneEmail(email) {
-  const conn = connectToDatabase();
-  conn.query(`select * from ${DB_TABLE} where email = '${email}';`, function (error, results, fields) {
-    if (error) throw error;
-    if (results.length < 1) { 
-        console.log(`${email} has not been submitted to database`);
-    } else {
-      if (results[0].isnew == 1) {
-        findUsualTemperature(results[0])
-        .then( (info) => {
-          var messageType = info[0];
-          var currentData = info[1];
-          sendEmail(email, messageType, currentData);
-        })
-        .catch ( (error) => {
-          console.log(`There was an error fetching temperature data`);
-        })
-        // Update row
-      } else {
-        console.log(`Welcome email has previously been sent to ${email}`)
-      }
-    }
-  }); 
-  conn.end();
-}
 
 function query(conn, cmd) {
   return new Promise( ( resolve, reject ) => {
@@ -179,10 +150,38 @@ function query(conn, cmd) {
   } );
 }
 
+function sender(transporter, mailOptions) {
+  return new Promise( ( resolve, reject ) => {
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        console.log(err);
+        return reject(false);
+      }
+      else {
+        console.log(mailOptions);
+        resolve(true)
+      }
+    });
+} );
+}
+
 function handleRejection(error) {
   console.log(error.code);
   console.log(error.sqlMessage);
 } 
+
+async function sendOneEmail(email) {
+  const conn = connectToDatabase();
+  conn.query(`select * from ${DB_TABLE} where email = '${email}';`, async function (error, results, fields) {
+    if (error) throw error;
+    if (results.length < 1) { 
+        console.log(`${email} has not been submitted to database`);
+    } else {
+      await sendWelcomeEmail(results[0], conn);
+    }
+    conn.end();
+  }); 
+}
 
 async function sendAllEmailsInDatabase() {
   const conn = connectToDatabase();
@@ -191,15 +190,22 @@ async function sendAllEmailsInDatabase() {
 
   for (i = 0; i <= n ; i++) {
     rows = await query(conn, `select * from ${DB_TABLE} where ${i} < id and id <= ${i + 20};`).catch(handleRejection);
-    rows.forEach(sendWelcomeEmail);
+    for (i in rows) {
+      await sendWelcomeEmail(rows[i], conn);
+    }
     i = rows[rows.length - 1].id;
   }
   conn.end();
 }
 
-async function sendWelcomeEmail(entry) {
-  const result = await findUsualTemperature(entry);
-  sendEmail(entry.email, result[0], result[1]);
+async function sendWelcomeEmail(entry, conn) {
+  if (entry.isNew == 1) {
+    const result = await findUsualTemperature(entry);
+    const success = await sendEmail(entry.email, result[0], result[1]);
+    if (success) conn.query(`update ${DB_TABLE} set isnew = 0 where email = '${entry.email}'`);
+  } else {
+    console.log(`Welcome email has previously been sent to ${entry.email}`);
+  }
 }
 
 function connectToDatabase() {
