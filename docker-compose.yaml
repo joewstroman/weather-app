@@ -3,6 +3,7 @@ services:
   db:
     build:
       context: ./database
+    #For ease of use in the demo port will be exposed on localhost
     ports:
       - 3306:3306
     environment:
@@ -18,13 +19,16 @@ services:
       context: ./restapi
     command: ./wait-for-db.sh db
     restart: always
-    ports:
-      - 9000:80
     environment:
       DB_HOST: db
       DB_USER: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_PASSWORD}
       DB_NAME: ${MYSQL_DB_NAME}
+  auth:
+    ports:
+      - 9000:3000
+    build:
+      context: ./auth
   web:
     build:
       args:

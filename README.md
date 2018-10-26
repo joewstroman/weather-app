@@ -9,9 +9,8 @@ Nodejs
 
 ### Installing
 
-*Web Application*
 
-Install docker and run this command in the root directory.
+Install docker.
 
 ```
 cd weather-app
@@ -19,6 +18,15 @@ docker-compose up
 ```
 
 That's it. Visit `http://localhost:80` to see the app.
+
+The docker-compose up command initializes:
+
+a web server - to access the weather app site,
+a MYSQL database backend - to store the emails,
+a restapi that exposes all parts of the specified database,
+and an "auth" server which only exposes the email table as an endpoint and only allows connections from web server "localhost:80".
+
+More comprehensive authentication can be implemented but the email app should allow unathenticated access by definition.
 
 It will warn you when you don't have the correct environment variables set, when running docker.
 
@@ -28,6 +36,7 @@ MYSQL_PASSWORD -- User and root password
 MYSQL_DB_NAME -- Name of initial database
 MYSQL_TABLE_NAME -- Table name to store emails and locations
 ```
+
 
 
 *Cli*

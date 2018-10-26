@@ -7,7 +7,8 @@ create table $MYSQL_TABLE_NAME (
   longitude double not null,
   latitude double not null,
   time timestamp not null default NOW(),
-  id MEDIUMINT NOT NULL AUTO_INCREMENT,
+  id mediumint not null auto_increment,
+  isnew boolean not null default true,
   PRIMARY KEY (id)
 );
 EOC

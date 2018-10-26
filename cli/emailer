@@ -5,11 +5,15 @@ const mysql      = require('mysql');
 const fetch      = require('node-fetch');
 const nodemailer = require('nodemailer');
 
-const DB_HOST = process.env.MYSQL_DB_HOST;
-const DB_USER = process.env.MYSQL_USER;
-const DB_PASS = process.env.MYSQL_PASSWORD;
-const DB_NAME = process.env.MYSQL_DB_NAME;
-const APIKEY = process.env.DARK_SKY_API_KEY;
+const DB_HOST  = process.env.MYSQL_DB_HOST;
+const DB_USER  = process.env.MYSQL_USER;
+const DB_PASS  = process.env.MYSQL_PASSWORD;
+const DB_NAME  = process.env.MYSQL_DB_NAME;
+const DB_TABLE = process.env.MYSQL_TABLE_NAME;
+const APIKEY   = process.env.DARK_SKY_API_KEY;
+const GMAIL_USER_ADDRESS = process.env.GMAIL_USER_ADDRESS;
+const GMAIL_PASSWORD = process.env.GMAIL_PASSWORD;
+
 const historyBaseURI = "https://api.darksky.net/forecast/";
 
 const niceWeather = {
@@ -51,7 +55,6 @@ async function findUsualTemperature(entry) {
   var i;
   var currentTemp;
   var currentData;
-  var historicalTemps = [];
   var date;
   var fetchOptions = {
     redirect: "follow",
@@ -63,9 +66,9 @@ async function findUsualTemperature(entry) {
 
   console.log("Fetching weather data for:", entry.location);
   
-  for (i = 0; i < 7; i++) { 
+  for (i = 0; i < 2; i++) { 
     date = new Date();
-    timestamp = Math.floor(date.setFullYear(date.getFullYear() - i) / 1000);
+    timestamp = Math.floor(date.setFullYear(date.getFullYear() + i) / 1000);
     
     var url = historyBaseURI + `${APIKEY}/${entry.latitude},${entry.longitude},${timestamp}?units=us&exclude=currently,minutely,flags`;
 
@@ -75,18 +78,18 @@ async function findUsualTemperature(entry) {
         var json = await resp.json();
 
         if (i === 0) currentData = json.hourly.data[date.getHours()];
-        else historicalTemps.push(json.hourly.data[date.getHours()].temperature);
+        else historicalData = json.hourly.data[date.getHours()];
+        // The temperature data for a day in the future is calculated by historical data in the Dark Sky API
+        // Paying for the API would allow for many calls to calculate a more recent average temperature over many days
 
     } else {
       console.log(`Error fetching data for ${entry.location}`);
-      console.log(resp);
+      console.log(`${resp.status} - ${resp.statusText} - ${resp.url}`);
     }
- 
-    await sleep(1000);
   }
   
 
-  var avgTemp = avg(historicalTemps);
+  var avgTemp = historicalData.temperature;
   var currentTemp = currentData.temperature;
   var currentClimate = currentData.summary;
   var precipIntensity = currentData.precipIntensity;
@@ -105,14 +108,6 @@ async function findUsualTemperature(entry) {
   }
 }
 
-function avg(list) {
-  sum = 0;
-  for (i in list) {
-    sum += list[i];
-  }
-  return sum / list.length
-}
-
 function sendEmail(email, type, data) {
   var mailObject;
 
@@ -125,13 +120,13 @@ function sendEmail(email, type, data) {
     port: 465,
     secure: true,
     auth: {
-      user: process.env.GMAIL_USER_ADDRESS,
-      pass: process.env.GMAIL_PASSWORD
+      user: GMAIL_USER_ADDRESS,
+      pass: GMAIL_PASSWORD
     }
   });
 
   const mailOptions = {
-    from: process.env.GMAIL_USER_ADDRESS,
+    from: GMAIL_USER_ADDRESS,
     to: email,
     subject: mailObject.subject,
     html: `
@@ -142,37 +137,69 @@ function sendEmail(email, type, data) {
   };
 
   console.log(`=== Sending email to ${email}`);
+  console.log(mailOptions);
   transporter.sendMail(mailOptions, (err, info) => {
     if (err) console.log(err);
     else console.log(mailOptions);
   });
 }
 
-function sendOne(email) {
+function sendOneEmail(email) {
   const conn = connectToDatabase();
-  conn.query(`select * from emails where email = '${email}';`, function (error, results, fields) {
+  conn.query(`select * from ${DB_TABLE} where email = '${email}';`, function (error, results, fields) {
     if (error) throw error;
     if (results.length < 1) { 
         console.log(`${email} has not been submitted to database`);
     } else {
-      findUsualTemperature(results[0])
-      .then( (info) => {
-        var messageType = info[0];
-        var currentData = info[1];
-        sendEmail(email, messageType, currentData);
-      })
-      .catch ( (error) => {
-        console.log(`There was an error fetching temperature data`);
-      })
+      if (results[0].isnew == 1) {
+        findUsualTemperature(results[0])
+        .then( (info) => {
+          var messageType = info[0];
+          var currentData = info[1];
+          sendEmail(email, messageType, currentData);
+        })
+        .catch ( (error) => {
+          console.log(`There was an error fetching temperature data`);
+        })
+        // Update row
+      } else {
+        console.log(`Welcome email has previously been sent to ${email}`)
+      }
     }
   }); 
   conn.end();
 }
 
-function sendAll(email) {
+function query(conn, cmd) {
+  return new Promise( ( resolve, reject ) => {
+      conn.query( cmd, ( err, rows ) => {
+        if ( err ) return reject( err );
+        resolve( rows );
+      } );
+  } );
+}
+
+function handleRejection(error) {
+  console.log(error.code);
+  console.log(error.sqlMessage);
+} 
+
+async function sendAllEmailsInDatabase() {
   const conn = connectToDatabase();
-  conn.query("select id from ")
+  let rows = await query(conn, `select id from ${DB_TABLE} order by id desc limit 1;`).catch(handleRejection);
+  const n = rows[0].id
+
+  for (i = 0; i <= n ; i++) {
+    rows = await query(conn, `select * from ${DB_TABLE} where ${i} < id and id <= ${i + 20};`).catch(handleRejection);
+    rows.forEach(sendWelcomeEmail);
+    i = rows[rows.length - 1].id;
+  }
   conn.end();
+}
+
+async function sendWelcomeEmail(entry) {
+  const result = await findUsualTemperature(entry);
+  sendEmail(entry.email, result[0], result[1]);
 }
 
 function connectToDatabase() {
@@ -185,13 +212,27 @@ function connectToDatabase() {
   return conn;
 }
 
+function testSend() {
+  sendEmail(GMAIL_USER_ADDRESS, 1, { temperature: 80, summary: "clear" });
+  sendEmail(GMAIL_USER_ADDRESS, -1, { temperature: 30, summary: "rainy" });
+  sendEmail(GMAIL_USER_ADDRESS, 0, { temperature: 60, summary: "clear" })
+}
+
 program
   .version('0.1.0')
-  .usage('Usage: send -e email')
-  .option('-e, --email', 'Address to send weather powered email')
+  .usage('Usage: send -e email | send --all')
   .command('send <email>')
-  .action(sendOne)
-  .command('sendall')
-  .action(sendAll)
+  .option('-e, --email', 'Address to send weather powered email')
+  .action(sendOneEmail)
+
+program
+  .version('0.1.0')
+  .command('send-all')
+  .action(sendAllEmailsInDatabase)
+
+program
+  .version('0.1.0')
+  .command('test')
+  .action(testSend)
 
 program.parse(process.argv);

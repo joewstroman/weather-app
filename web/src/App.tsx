@@ -10,6 +10,7 @@ import ConfirmationWrapped from './Confirmation';
 import { IApiData, IAppState, ILocation, IRecord} from './Interfaces';
 
 const CITIESAPIURL =  'https://public.opendatasoft.com/api/records/1.0/search/?dataset=1000-largest-us-cities-by-population-with-geographic-coordinates&rows=100&sort=-rank&facet=city&facet=state'
+// This would normally be the fqdn of the "auth" server instead of localhost
 const DATABASEAPIURL = 'http://localhost:9000';
 
 class App extends React.Component<{},IAppState> {
@@ -100,7 +101,7 @@ class App extends React.Component<{},IAppState> {
       const coords = (location) ? location.coordinates : [];
 
       const response = 
-        await fetch(DATABASEAPIURL + `/api/${process.env.REACT_APP_MYSQL_TABLE_NAME}`, {
+        await fetch(DATABASEAPIURL + `/${process.env.REACT_APP_MYSQL_TABLE_NAME}`, {
           body: JSON.stringify({
             email: this.state.email.replace(/(\r\n|\n|\r)/gm, ""),
             latitude: coords[0],
@@ -113,16 +114,24 @@ class App extends React.Component<{},IAppState> {
           },
           method: "POST",
           mode: "cors",
-        })
+        }).catch((err) => alert(err));
       
-      if (response.status === 200) {
-        this.setState(assign(this.state, { emailIsInDatabase: false, showModal: true }));
-      } else if (response.status === 400) {
-        this.setState(assign(this.state, { emailIsInDatabase: true, showModal: true }));
-      } else if (!response.ok) {
-        alert(`Error contacting: ${response.url}\n${response.status} ${response.statusText}`);
+      if (response) {
+        if (response.status === 200) {
+          this.setState(assign(this.state, { emailIsInDatabase: false, showModal: true }));
+        } else if (response.status === 400) {
+          this.setState(assign(this.state, { emailIsInDatabase: true, showModal: true }));
+        } else if (!response.ok) {
+          console.log("Here?");
+          this.handleDBError(response);
+        }
       }
     }
+  }
+
+  private handleDBError(response:Response) {
+    console.log(response);
+    alert(`Error contacting: ${response.url}\n${response.status} ${response.statusText}`);
   }
 
   private autoComplete = (e:React.FormEvent<{}>, s:string) => {

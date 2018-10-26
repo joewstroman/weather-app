@@ -6,6 +6,9 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash
 RUN apt-get install -y nodejs
 RUN npm install -g yarn
 
+ARG REACT_APP_MYSQL_TABLE_NAME
+RUN echo ${REACT_APP_MYSQL_TABLE_NAME}
+
 RUN mkdir -p /home/web
 COPY . /home/web/
 
