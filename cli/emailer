@@ -162,25 +162,7 @@ function sender(transporter, mailOptions) {
         resolve(true)
       }
     });
-} );
-}
-
-function handleRejection(error) {
-  console.log(error.code);
-  console.log(error.sqlMessage);
-} 
-
-async function sendOneEmail(email) {
-  const conn = connectToDatabase();
-  conn.query(`select * from ${DB_TABLE} where email = '${email}';`, async function (error, results, fields) {
-    if (error) throw error;
-    if (results.length < 1) { 
-        console.log(`${email} has not been submitted to database`);
-    } else {
-      await sendWelcomeEmail(results[0], conn);
-    }
-    conn.end();
-  }); 
+  });
 }
 
 async function sendAllEmailsInDatabase() {
@@ -196,6 +178,19 @@ async function sendAllEmailsInDatabase() {
     i = rows[rows.length - 1].id;
   }
   conn.end();
+}
+
+async function sendOneEmail(email) {
+  const conn = connectToDatabase();
+  conn.query(`select * from ${DB_TABLE} where email = '${email}';`, async function (error, results, fields) {
+    if (error) throw error;
+    if (results.length < 1) { 
+        console.log(`${email} has not been submitted to database`);
+    } else {
+      await sendWelcomeEmail(results[0], conn);
+    }
+    conn.end();
+  }); 
 }
 
 async function sendWelcomeEmail(entry, conn) {
@@ -217,6 +212,11 @@ function connectToDatabase() {
   });
   return conn;
 }
+
+function handleRejection(error) {
+  console.log(error.code);
+  console.log(error.sqlMessage);
+} 
 
 function testSend() {
   sendEmail(GMAIL_USER_ADDRESS, 1, { temperature: 80, summary: "clear" });
