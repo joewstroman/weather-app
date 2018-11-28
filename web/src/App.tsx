@@ -10,8 +10,7 @@ import ConfirmationWrapped from './Confirmation';
 import { IApiData, IAppState, ILocation, IRecord} from './Interfaces';
 
 const CITIESAPIURL =  'https://public.opendatasoft.com/api/records/1.0/search/?dataset=1000-largest-us-cities-by-population-with-geographic-coordinates&rows=100&sort=-rank&facet=city&facet=state'
-// This would normally be the fqdn of the "auth" server instead of localhost
-const DATABASEAPIURL = 'http://localhost:9000';
+const DATABASEAPIURL = process.env.REACT_APP_DB_URL;
 
 class App extends React.Component<{},IAppState> {
 
@@ -101,7 +100,7 @@ class App extends React.Component<{},IAppState> {
       const coords = (location) ? location.coordinates : [];
 
       const response = 
-        await fetch(DATABASEAPIURL + `/${process.env.REACT_APP_MYSQL_TABLE_NAME}`, {
+        await fetch(DATABASEAPIURL + `/send`, {
           body: JSON.stringify({
             email: this.state.email.replace(/(\r\n|\n|\r)/gm, ""),
             latitude: coords[0],
@@ -113,7 +112,6 @@ class App extends React.Component<{},IAppState> {
               "Content-Type": "application/json",
           },
           method: "POST",
-          mode: "cors",
         }).catch((err) => alert(err));
       
       if (response) {

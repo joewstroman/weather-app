@@ -1,21 +1,20 @@
-FROM debian:latest
+FROM alpine
 
-RUN apt-get update
-RUN apt-get install -y git curl gnupg
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash
-RUN apt-get install -y nodejs
+RUN apk add curl
+RUN apk add npm
+
 RUN npm install -g yarn
 
 ARG REACT_APP_MYSQL_TABLE_NAME
-RUN echo ${REACT_APP_MYSQL_TABLE_NAME}
+ARG REACT_APP_DB_URL
 
 RUN mkdir -p /home/web
 COPY . /home/web/
 
 WORKDIR /home/web
 
-RUN yarn install
-RUN yarn run build
+RUN yarn install && yarn run build && rm -rf node_modules
 RUN yarn global add serve
+RUN rm -rf /home/web/node_modules
 
 CMD ["serve", "-s", "/home/web/build"]

@@ -22,7 +22,7 @@ function getFromXmySql(req, res) {
   .catch(returnResponse(res))
 }
 
-function fetchFromApi(action, req) {
+async function fetchFromApi(action, req) {
   let params = {
     cache: "no-cache",
     headers: {
@@ -31,13 +31,22 @@ function fetchFromApi(action, req) {
     method: action.toUpperCase(),
     mode: "cors"
   }
-  if (Object.keys(req.body).length) params.body = JSON.stringify(req.body);
-  return fetch('http://restapi:80' + `/api/${req.params.table}`, params)
+
+  if (action.toUpperCase() === 'POST') {
+    for (let key in req.body) {
+      // Check for unsafe characters
+      if (req.body[key].constructor === String && req.body[key].match(/[^\w,.@ ]/)) {
+        return { req: req, status: '300', statusText: `Request not allowed with ${key}: ${req.body[k]}` };
+      }
+    }
+    params.body = JSON.stringify(req.body);
+  }
+  return fetch('http://restapi:80' + `/api/${process.env.MYSQL_TABLE_NAME}`, params)
 }
 
 var jsonParser = bodyParser.json();
 
 module.exports = function(app) {
-  app.post('/:table', jsonParser, sendToXmySql);
-  app.get('/:table', getFromXmySql);
+  app.post('/send', jsonParser, sendToXmySql);
+  app.get('/get', getFromXmySql);
 }

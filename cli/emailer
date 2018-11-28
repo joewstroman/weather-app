@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-
 const program    = require('commander');
 const mysql      = require('mysql');
 const fetch      = require('node-fetch');
 const nodemailer = require('nodemailer');
 
-const DB_HOST  = process.env.MYSQL_DB_HOST;
+require('dotenv').config({ path: '../.env' });
+
+const DB_HOST  = process.env.MYSQL_DB_URL;
 const DB_USER  = process.env.MYSQL_USER;
 const DB_PASS  = process.env.MYSQL_PASSWORD;
 const DB_NAME  = process.env.MYSQL_DB_NAME;
@@ -32,10 +33,6 @@ const neutralWeather = {
   subject: "Enjoy a discount on us.",
   image: "https://media.rbl.ms/image?u=%2Ffiles%2F2016%2F09%2F30%2F636108007660223475-117681935_200.gif&ho=https%3A%2F%2Faz616578.vo.msecnd.net&s=526&h=2cc957bac0261e01f47d00e9d5543e2dfb78c561501804d79e979cc76d6b30a8&size=980x&c=1268085081",
   text: "It's a regular day. But that doesn't mean it's not a good day.\nHere's a discount to start your day on the right track."
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function fetchRetry(url, options, n) {
@@ -167,16 +164,12 @@ function sender(transporter, mailOptions) {
 
 async function sendAllEmailsInDatabase() {
   const conn = connectToDatabase();
-  let rows = await query(conn, `select id from ${DB_TABLE} order by id desc limit 1;`).catch(handleRejection);
-  const n = rows[0].id
+  let rows = await query(conn, `select * from ${DB_TABLE} where isnew = 1 order by id;`).catch(handleRejection);
 
-  for (i = 0; i <= n ; i++) {
-    rows = await query(conn, `select * from ${DB_TABLE} where ${i} < id and id <= ${i + 20};`).catch(handleRejection);
-    for (i in rows) {
-      await sendWelcomeEmail(rows[i], conn);
-    }
-    i = rows[rows.length - 1].id;
+  for (i in rows) {
+    await sendWelcomeEmail(rows[i], conn);
   }
+
   conn.end();
 }
 
@@ -194,7 +187,7 @@ async function sendOneEmail(email) {
 }
 
 async function sendWelcomeEmail(entry, conn) {
-  if (entry.isNew == 1) {
+  if (entry.isnew === 1) {
     const result = await findUsualTemperature(entry);
     const success = await sendEmail(entry.email, result[0], result[1]);
     if (success) conn.query(`update ${DB_TABLE} set isnew = 0 where email = '${entry.email}'`);
