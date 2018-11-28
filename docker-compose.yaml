@@ -3,15 +3,15 @@ services:
   db:
     build:
       context: ./database
-    #For ease of use in the demo port will be exposed on localhost
-    ports:
-      - 3306:3306
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DB_NAME: ${MYSQL_DB_NAME}
       MYSQL_TABLE_NAME: ${MYSQL_TABLE_NAME}
+    # Uncomment this port to send emails locally with the CLI email tool
+    # ports:
+    #   - 3306:3306
   restapi:
     links: 
       - db
@@ -25,14 +25,18 @@ services:
       DB_PASSWORD: ${MYSQL_PASSWORD}
       DB_NAME: ${MYSQL_DB_NAME}
   auth:
-    ports:
-      - 9000:3000
     build:
       context: ./auth
+    environment:
+      MYSQL_TABLE_NAME: ${MYSQL_TABLE_NAME}
+      WEB_URL: ${WEB_URL}
+    ports:
+      - 9000:3000
   web:
     build:
       args:
         REACT_APP_MYSQL_TABLE_NAME: ${MYSQL_TABLE_NAME}
+        REACT_APP_DB_URL: ${DB_URL}
       context: ./web
     ports:
       - 80:5000
