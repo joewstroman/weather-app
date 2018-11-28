@@ -26,14 +26,7 @@ and an "auth" server which only exposes the email table as an endpoint and only 
 
 More comprehensive authentication can be implemented but the email app should allow unathenticated access by definition.
 
-It will warn you when you don't have the correct environment variables set, when running docker.
-
-```
-MYSQL_USER -- User to sign in as
-MYSQL_PASSWORD -- User and root password
-MYSQL_DB_NAME -- Name of initial database
-MYSQL_TABLE_NAME -- Table name to store emails and locations
-```
+Environment variables are loaded with the .env file.
 
 
 #### Cli
@@ -46,14 +39,4 @@ npm install
 `./emailer send -e [email]`
 `./emailer send-all`
 
-You will also need to set enviornment variables here:
-```
-DARK_SKY_API_KEY (f03bf9a777e7463a57a26e990397bddf)
-GMAIL_USER_ADDRESS
-GMAIL_PASSWORD
-MYSQL_DB_HOST (localhost)
-MYSQL_USER
-MYSQL_PASSWORD
-MYSQL_DB_NAME
-MYSQL_TABLE_NAME
-```
+Environment variables are loaded with the dotenv node module.
